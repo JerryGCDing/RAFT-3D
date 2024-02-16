@@ -68,8 +68,8 @@ def make_kitti_submission(model, args):
 
     DEPTH_SCALE = .1
 
-    for i_batch, data_blob in enumerate(test_loader):
-        image1, image2, disp1, disp2, intrinsics = [item.cuda() for item in data_blob]
+    for data_blob in tqdm(test_loader):
+        idx, image1, image2, disp1, disp2, intrinsics = [item.cuda() for item in data_blob]
 
         img1 = image1[0].permute(1, 2, 0).cpu().numpy()
         depth1 = DEPTH_SCALE * (intrinsics[0, 0] / disp1)
@@ -98,7 +98,7 @@ def make_kitti_submission(model, args):
         disp1 = disp1[0].cpu().numpy()
         disp2 = disp2[0].cpu().numpy()
 
-        KITTIEval.write_prediction(i_batch, disp1, disp2, flow)
+        KITTIEval.write_prediction(idx, disp1, disp2, flow)
 
 
 if __name__ == '__main__':

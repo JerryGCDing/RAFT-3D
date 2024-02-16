@@ -197,6 +197,7 @@ class KITTIFlow(data.Dataset):
     def __init__(self, root, list_filenames, *, msnet_mode='2D'):
         self.root = root
         self.init_seed = None
+        self.file_idx = None
         self.image1_list = None
         self.image2_list = None
         self.disp1_ms_list = None
@@ -218,6 +219,7 @@ class KITTIFlow(data.Dataset):
         # Format - left_0, right_0, left_1, right_1, disp_0, disp_1, flow, gt_voxel_0, gt_voxel_1, gt_flow, calib
         lines = read_all_lines(list_filename)
         splits = [line.split() for line in lines]
+        self.file_idx = []
         self.image1_list = []
         self.image2_list = []
         self.disp1_ms_list = []
@@ -225,6 +227,7 @@ class KITTIFlow(data.Dataset):
         self.calib_list = []
         for x in splits:
             file_id = x[0].split('/')[-1].split('_')[0]
+            self.file_idx.append(int(file_id))
             self.image1_list.append(x[0])
             self.image2_list.append(x[2])
             self.calib_list.append(x[-1])
@@ -255,4 +258,4 @@ class KITTIFlow(data.Dataset):
         disp2 = torch.from_numpy(disp2).float()
         intrinsics = torch.from_numpy(intrinsics).float()
 
-        return image1, image2, disp1, disp2, intrinsics
+        return self.file_idx[index], image1, image2, disp1, disp2, intrinsics

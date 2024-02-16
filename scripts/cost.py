@@ -60,17 +60,16 @@ def eval_ops(model, args):
     test_dataset = KITTIFlow(args.root, args.list_filenames, msnet_mode=args.msnet_mode)
     DEPTH_SCALE = .1
 
-    idx, image1, image2, disp1, disp2, intrinsics = [item.cuda() for item in test_dataset[0]]
-    image1 = image1[None, ...]
-    image2 = image2[None, ...]
-    disp1 = disp1[None, ...]
-    disp2 = disp2[None, ...]
-    intrinsics = intrinsics[None, ...]
+    idx, image1, image2, disp1, disp2, intrinsics = [item for item in test_dataset[0]]
+    image1 = image1[None, ...].cuda()
+    image2 = image2[None, ...].cuda()
+    disp1 = disp1[None, ...].cuda()
+    disp2 = disp2[None, ...].cuda()
+    intrinsics = intrinsics[None, ...].cuda()
 
     depth1 = DEPTH_SCALE * (intrinsics[0, 0] / disp1)
     depth2 = DEPTH_SCALE * (intrinsics[0, 0] / disp2)
 
-    ht, wd = image1.shape[2:]
     image1, image2, depth1, depth2, _ = \
         prepare_images_and_depths(image1, image2, depth1, depth2)
 

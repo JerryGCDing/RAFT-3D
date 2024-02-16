@@ -91,8 +91,7 @@ if __name__ == '__main__':
 
     RAFT3D = importlib.import_module(args.network).RAFT3D
 
-    model = torch.nn.DataParallel(RAFT3D(args))
-    model.load_state_dict(torch.load(args.model))
+    model = RAFT3D(args)
 
     model.cuda()
     model.eval()

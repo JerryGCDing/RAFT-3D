@@ -229,8 +229,8 @@ class KITTIFlow(data.Dataset):
             self.image2_list.append(x[2])
             self.calib_list.append(x[-1])
 
-            self.disp1_ms_list.append(f'./data_scene_flow/training/disp_masnet{msnet_mode}/{file_id}_10.png')
-            self.disp2_ms_list.append(f'./data_scene_flow/training/disp_masnet{msnet_mode}/{file_id}_11.png')
+            self.disp1_ms_list.append(f'./data_scene_flow/training/disp_msnet{msnet_mode}/{file_id}_10.png')
+            self.disp2_ms_list.append(f'./data_scene_flow/training/disp_msnet{msnet_mode}/{file_id}_11.png')
 
     def __len__(self):
         return len(self.image1_list)

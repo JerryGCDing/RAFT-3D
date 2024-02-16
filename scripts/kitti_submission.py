@@ -8,11 +8,12 @@ import numpy as np
 import cv2
 import argparse
 import torch
+from thop import profile, clever_format
 
 import raft3d.projective_ops as pops
 
 from utils import show_image, normalize_image
-from data_readers.kitti import KITTIEval
+from data_readers.kitti import KITTIEval, KITTIFlow
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
@@ -61,9 +62,9 @@ def prepare_images_and_depths(image1, image2, depth1, depth2, depth_scale=1.0):
 
 
 @torch.no_grad()
-def make_kitti_submission(model):
+def make_kitti_submission(model, args):
     loader_args = {'batch_size': 1, 'shuffle': False, 'num_workers': 1, 'drop_last': False}
-    test_loader = DataLoader(KITTIEval(), **loader_args)
+    test_loader = DataLoader(KITTIFlow(args.root, args.list_filenames, msnet_mode=args.msnet_mode), **loader_args)
 
     DEPTH_SCALE = .1
 
@@ -105,6 +106,9 @@ if __name__ == '__main__':
     parser.add_argument('--model', help='path the model weights')
     parser.add_argument('--network', default='raft3d.raft3d', help='network architecture')
     parser.add_argument('--radius', type=int, default=32)
+    parser.add_argument('--root', type=str, default='/work/vig/Datasets/KITTI_VoxelFlow')
+    parser.add_argument('--list_filenames', type=str, default='./filenames/KITTI_flow_valid.txt')
+    parser.add_argument('--msnet_mode', type=str)
     args = parser.parse_args()
 
     import importlib
@@ -123,4 +127,4 @@ if __name__ == '__main__':
         os.mkdir('kitti_submission/disp_1')
         os.mkdir('kitti_submission/flow')
 
-    make_kitti_submission(model)
+    make_kitti_submission(model, args)

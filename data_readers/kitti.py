@@ -15,9 +15,10 @@ import os.path as osp
 
 from glob import glob
 
-import raft3d.projective_ops as pops
 from . import frame_utils
 from .augmentation import RGBDAugmentor, SparseAugmentor
+from .data_io import read_all_lines
+
 
 class KITTIEval(data.Dataset):
 
@@ -188,3 +189,70 @@ class KITTI(data.Dataset):
                 self.augmentor(image1, image2, depth1, depth2, flow, valid, intrinsics)
 
         return image1, image2, depth1, depth2, flow, valid, intrinsics
+
+
+class KITTIFlow(data.Dataset):
+    crop = 80
+
+    def __init__(self, root, list_filenames, *, msnet_mode='2D'):
+        self.root = root
+        self.init_seed = None
+        self.image1_list = None
+        self.image2_list = None
+        self.disp1_ms_list = None
+        self.disp2_ms_list = None
+        self.calib_list = None
+        self.load_path(list_filenames, msnet_mode)
+
+        self.intrinsics_list = []
+        for calib_file in self.calib_list:
+            with open(osp.join(self.root, calib_file)) as f:
+                reader = csv.reader(f, delimiter=' ')
+                for row in reader:
+                    if row[0] == 'K_02:':
+                        K = np.array(row[1:], dtype=np.float32).reshape(3, 3)
+                        kvec = np.array([K[0, 0], K[1, 1], K[0, 2], K[1, 2]])
+                        self.intrinsics_list.append(kvec)
+
+    def load_path(self, list_filename, msnet_mode):
+        # Format - left_0, right_0, left_1, right_1, disp_0, disp_1, flow, gt_voxel_0, gt_voxel_1, gt_flow, calib
+        lines = read_all_lines(list_filename)
+        splits = [line.split() for line in lines]
+        self.image1_list = []
+        self.image2_list = []
+        self.disp1_ms_list = []
+        self.disp2_ms_list = []
+        self.calib_list = []
+        for x in splits:
+            file_id = x[0].split('/')[-1].split('_')[0]
+            self.image1_list.append(x[0])
+            self.image2_list.append(x[2])
+            self.calib_list.append(x[-1])
+
+            self.disp1_ms_list.append(f'./data_scene_flow/training/disp_masnet{msnet_mode}/{file_id}_10.png')
+            self.disp2_ms_list.append(f'./data_scene_flow/training/disp_masnet{msnet_mode}/{file_id}_11.png')
+
+    def __len__(self):
+        return len(self.image1_list)
+
+    def __getitem__(self, index):
+        intrinsics = self.intrinsics_list[index]
+        image1 = cv2.imread(osp.join(self.root, self.image1_list[index]))
+        image2 = cv2.imread(osp.join(self.root, self.image2_list[index]))
+
+        disp1 = cv2.imread(osp.join(self.root, self.disp1_ms_list[index]), cv2.IMREAD_ANYDEPTH) / 256.0
+        disp2 = cv2.imread(osp.join(self.root, self.disp2_ms_list[index]), cv2.IMREAD_ANYDEPTH) / 256.0
+
+        image1 = image1[self.crop:]
+        image2 = image2[self.crop:]
+        disp1 = disp1[self.crop:]
+        disp2 = disp2[self.crop:]
+        intrinsics[3] -= self.crop
+
+        image1 = torch.from_numpy(image1).float().permute(2, 0, 1)
+        image2 = torch.from_numpy(image2).float().permute(2, 0, 1)
+        disp1 = torch.from_numpy(disp1).float()
+        disp2 = torch.from_numpy(disp2).float()
+        intrinsics = torch.from_numpy(intrinsics).float()
+
+        return image1, image2, disp1, disp2, intrinsics

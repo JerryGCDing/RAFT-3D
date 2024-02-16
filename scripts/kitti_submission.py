@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append('.')
 
 from tqdm import tqdm
@@ -8,7 +9,6 @@ import cv2
 import argparse
 import torch
 
-from lietorch import SE3
 import raft3d.projective_ops as pops
 
 from utils import show_image, normalize_image
@@ -23,7 +23,7 @@ from data_readers.frame_utils import *
 
 def display(img, tau, phi):
     """ display se3 fields """
-    fig, (ax1, ax2, ax3) = plt.subplots(1,3)
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
     ax1.imshow(img[:, :, ::-1] / 255.0)
 
     tau_img = np.clip(tau, -0.1, 0.1)
@@ -39,15 +39,15 @@ def display(img, tau, phi):
 
 def prepare_images_and_depths(image1, image2, depth1, depth2, depth_scale=1.0):
     """ padding, normalization, and scaling """
-    
+
     ht, wd = image1.shape[-2:]
     pad_h = (-ht) % 8
     pad_w = (-wd) % 8
 
-    image1 = F.pad(image1, [0,pad_w,0,pad_h], mode='replicate')
-    image2 = F.pad(image2, [0,pad_w,0,pad_h], mode='replicate')
-    depth1 = F.pad(depth1[:,None], [0,pad_w,0,pad_h], mode='replicate')[:,0]
-    depth2 = F.pad(depth2[:,None], [0,pad_w,0,pad_h], mode='replicate')[:,0]
+    image1 = F.pad(image1, [0, pad_w, 0, pad_h], mode='replicate')
+    image2 = F.pad(image2, [0, pad_w, 0, pad_h], mode='replicate')
+    depth1 = F.pad(depth1[:, None], [0, pad_w, 0, pad_h], mode='replicate')[:, 0]
+    depth2 = F.pad(depth2[:, None], [0, pad_w, 0, pad_h], mode='replicate')[:, 0]
 
     depth1 = (depth_scale * depth1).float()
     depth2 = (depth_scale * depth2).float()
@@ -70,9 +70,9 @@ def make_kitti_submission(model):
     for i_batch, data_blob in enumerate(test_loader):
         image1, image2, disp1, disp2, intrinsics = [item.cuda() for item in data_blob]
 
-        img1 = image1[0].permute(1,2,0).cpu().numpy()
-        depth1 = DEPTH_SCALE * (intrinsics[0,0] / disp1)
-        depth2 = DEPTH_SCALE * (intrinsics[0,0] / disp2)
+        img1 = image1[0].permute(1, 2, 0).cpu().numpy()
+        depth1 = DEPTH_SCALE * (intrinsics[0, 0] / disp1)
+        depth2 = DEPTH_SCALE * (intrinsics[0, 0] / disp2)
 
         ht, wd = image1.shape[2:]
         image1, image2, depth1, depth2, _ = \
@@ -93,7 +93,7 @@ def make_kitti_submission(model):
 
         # compute disparity change
         coords, _ = pops.projective_transform(Ts, depth1, intrinsics)
-        disp2 =  intrinsics[0,0] * coords[:,:ht,:wd,2] * DEPTH_SCALE
+        disp2 = intrinsics[0, 0] * coords[:, :ht, :wd, 2] * DEPTH_SCALE
         disp1 = disp1[0].cpu().numpy()
         disp2 = disp2[0].cpu().numpy()
 
@@ -108,6 +108,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     import importlib
+
     RAFT3D = importlib.import_module(args.network).RAFT3D
 
     model = torch.nn.DataParallel(RAFT3D(args))

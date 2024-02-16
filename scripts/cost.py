@@ -1,6 +1,7 @@
 import sys
 
-sys.path.append('..')
+sys.path.append('.')
+
 import os
 import cv2
 import argparse

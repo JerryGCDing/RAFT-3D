@@ -121,10 +121,10 @@ if __name__ == '__main__':
     model.cuda()
     model.eval()
 
-    if not os.path.isdir(f'kitti_submission_{args.msnet_mode}'):
-        os.mkdir(f'kitti_submission_{args.msnet_mode}')
-        os.mkdir(f'kitti_submission_{args.msnet_mode}/disp_0')
-        os.mkdir(f'kitti_submission_{args.msnet_mode}/disp_1')
-        os.mkdir(f'kitti_submission_{args.msnet_mode}/flow')
+    if not os.path.isdir(f'kitti_submission'):
+        os.mkdir(f'kitti_submission')
+        os.mkdir(f'kitti_submission/disp_0')
+        os.mkdir(f'kitti_submission/disp_1')
+        os.mkdir(f'kitti_submission/flow')
 
     make_kitti_submission(model, args)
